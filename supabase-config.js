@@ -2,7 +2,7 @@
 // NEVER put a service_role or secret key here.
 
 window.SUPABASE_CONFIG = {
-  SUPABASE_URL: "https://kavqmpksmuofpiqgxvgp.supabase.co",
+  SUPABASE_URL: "https://kavqmpksmuofpiqxqvgp.supabase.co",
 
   SUPABASE_ANON_KEY: "sb_publishable_oMaiQ5mDfl8fZFd2z2IlFw_jMlKn_PB",
 
