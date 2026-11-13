@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#9870D8">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website"><meta property="og:title" content="THE 1BHK CHRONICLES"><meta property="og:description" content="You wanted freedom. You got dishes.">
-<meta property="og:image" content="https://YOUR-DOMAIN.vercel.app/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Pixel-art apartment with two chefs under a lavender sky">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://YOUR-DOMAIN.vercel.app/og.png">
+<meta property="og:image" content="https://mathes-was-not-ready.vercel.app/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Pixel-art apartment with two chefs under a lavender sky">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://mathes-was-not-ready.vercel.app/og.png">
 <script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};</script><script defer src="/_vercel/insights/script.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Silkscreen:wght@400;700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -102,10 +102,18 @@ label{display:block;font:700 11px Silkscreen;margin:10px 0 3px;text-transform:up
 .smp{font:700 10px Silkscreen;background:var(--yel);color:var(--deep);padding:2px 6px}
 @media(max-width:560px){.arr.l{left:-52px}.arr.r{right:-52px}.badge{width:170px;height:170px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
-</style></head><body>
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+</head><body>
 
 <section id="hero">
 <div id="clouds"></div><div id="floaters"></div>
+<div class="accessbar" aria-label="Editor access">
+  <span class="access-state" id="access-state">PUBLIC ARCHIVE · CONNECTING</span>
+  <button class="btn s" id="editor-login" type="button">EDITOR LOGIN</button>
+  <button class="btn s" id="editor-logout" type="button" hidden>LOG OUT</button>
+</div>
+<p id="connection-note" class="connection-note" role="status" aria-live="polite"></p>
 <div class="w">
  <h1 class="logo" aria-label="The 1BHK Chronicles" id="logo"></h1>
  <div class="f">THE CHRONICLES</div>
@@ -123,8 +131,8 @@ label{display:block;font:700 11px Silkscreen;margin:10px 0 3px;text-transform:up
 <section id="kit"><div class="mount"></div>
 <div class="w" style="padding-top:70px">
  <h2 class="t">LEVEL 02 — KITCHEN MAYHEM</h2>
- <p class="ctr">Today’s menu. <span class="smp">SAMPLE DATA</span></p>
- <div class="ctr" style="margin-top:14px"><button class="btn" id="add">[ + REPORT A MEAL ]</button></div>
+ <p class="ctr">Today’s menu. <span class="smp">LIVE KITCHEN LOG</span></p>
+ <div class="ctr" style="margin-top:14px"><button class="btn" id="add" type="button" hidden>[ + REPORT A MEAL ]</button></div>
  <div class="grid" id="meals"></div>
  <div class="ctr"><button class="btn" id="fridge">OPEN THE FRIDGE</button><p class="ctr f" id="fq" style="min-height:30px;margin-top:10px"></p></div>
  <div class="props" id="props"></div><p class="ctr f" id="pj" style="min-height:30px;margin-top:10px">Poke the appliances.</p>
@@ -132,7 +140,7 @@ label{display:block;font:700 11px Silkscreen;margin:10px 0 3px;text-transform:up
 
 <section id="arc"><div class="w">
  <h2 class="t">LEVEL 03 — THE INCIDENT ARCHIVE</h2>
- <p class="ctr f">The logbook remembers everything. <span class="smp">SAMPLE DATA</span></p>
+ <p class="ctr f">The logbook remembers everything. <span class="smp">PUBLIC ARCHIVE</span></p>
  <form class="box fil" id="fil" onsubmit="return false" style="margin-top:18px">
   <input data-f="q" placeholder="Search food or notes" aria-label="Search">
   <select data-f="c" aria-label="Meal type"><option value="">All meals</option><option>BREAKFAST</option><option>LUNCH</option><option>DINNER</option><option>SNACKS</option></select>
@@ -148,10 +156,10 @@ label{display:block;font:700 11px Silkscreen;margin:10px 0 3px;text-transform:up
 <section id="wt">
 <div class="w">
  <h2 class="t">CHARACTER DEVELOPMENT.</h2>
- <p class="ctr f">Not all progress is measured in XP. <span class="smp">SAMPLE DATA</span></p>
+ <p class="ctr f">Not all progress is measured in XP. <span class="smp">PUBLIC CHARACTER STATS</span></p>
  <div class="box" id="wstats"></div>
  <div class="box"><div class="row" id="rng" style="justify-content:flex-start;margin-bottom:8px"><button class="btn s" data-r="7">7D</button><button class="btn s" data-r="30">30D</button><button class="btn s" data-r="90">90D</button><button class="btn s" data-r="0">ALL</button></div><svg class="ch" id="chart" viewBox="0 0 320 130" role="img" aria-label="Weight history line chart"></svg></div>
- <form class="box row" id="wf"><input id="wk" type="number" step="0.1" min="20" max="300" placeholder="Weight (kg)" aria-label="Weight in kg" style="flex:1;min-width:110px"><input id="wd" type="date" aria-label="Date" style="flex:1;min-width:130px"><button class="btn">[ UPDATE CHARACTER STATS ]</button><span class="err" id="we" style="width:100%;color:#ffd0d0"></span></form>
+ <form class="box row" id="wf" hidden><input id="wk" type="number" step="0.1" min="20" max="300" placeholder="Weight (kg)" aria-label="Weight in kg" style="flex:1;min-width:110px"><input id="wd" type="date" aria-label="Date" style="flex:1;min-width:130px"><button class="btn">[ UPDATE CHARACTER STATS ]</button><span class="err" id="we" style="width:100%;color:#ffd0d0"></span></form>
  <div id="wl"></div>
 </div></section>
 
@@ -184,22 +192,114 @@ label{display:block;font:700 11px Silkscreen;margin:10px 0 3px;text-transform:up
  <label for="ms">Status</label><select id="ms"><option>EATEN</option><option>SKIPPED</option><option>ORDERED</option><option>NOT PREPARED</option></select>
  <label for="md2">Date</label><input id="md2" type="date"><label for="mh">Time</label><input id="mh" type="time">
  <label for="mx">Description</label><textarea id="mx" rows="2" maxlength="140"></textarea>
- <label for="mi">Photo (optional)</label><input id="mi" type="file" accept="image/*">
+ <label for="mi">Photo (optional)</label><input id="mi" type="file" accept="image/jpeg,image/png,image/webp"><small id="photo-status" class="f">JPEG, PNG or WebP · up to 10 MB</small>
  <p class="err" id="me" role="alert"></p>
  <div class="row"><button class="btn s" type="button" id="mcl">CANCEL</button><button class="btn" id="msv">SUBMIT</button></div>
+</form></dialog>
+<dialog id="auth-dialog"><form id="auth-form" method="dialog" novalidate>
+  <h2 class="f">EDITOR ACCESS</h2>
+  <p>Public visitors can watch the chaos. Only the two authorised humans can edit it.</p>
+  <label for="auth-email">Authorised email</label>
+  <input id="auth-email" type="email" autocomplete="email" required placeholder="you@example.com">
+  <p class="err" id="auth-message" role="alert" aria-live="polite"></p>
+  <div class="row">
+    <button class="btn s" type="button" id="auth-close">CLOSE</button>
+    <button class="btn" type="submit" id="auth-send">SEND MAGIC LINK</button>
+  </div>
 </form></dialog>
 <div id="toast" role="status"><h2>FOOD REPORT ACCEPTED.<br>HUMANITY SURVIVES ANOTHER DAY.</h2></div>
 
 <script>
-/* ---- data abstraction (swap for real API later) ---- */
-const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+/* ---- Supabase data + editor access ---- */
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const iso=d=>{const z=new Date(d);return z.getFullYear()+"-"+String(z.getMonth()+1).padStart(2,"0")+"-"+String(z.getDate()).padStart(2,"0")};
-const today=iso(Date.now()),yest=iso(Date.now()-864e5),moved=iso(Date.now()-12*864e5);
-const seedM=[{id:1,c:"BREAKFAST",n:"Maggi, but ambitious",k:"Mathes",s:"EATEN",d:yest,h:"09:10",x:"First stove ignition."},{id:2,c:"LUNCH",n:"",k:"Nobody",s:"SKIPPED",d:yest,h:"14:00",x:""},{id:3,c:"DINNER",n:"Egg curry",k:"Mathes",s:"EATEN",d:yest,h:"21:00",x:"Smoke alarm stayed quiet."},{id:4,c:"BREAKFAST",n:"Toast",k:"Me",s:"EATEN",d:today,h:"08:30",x:""},{id:5,c:"LUNCH",n:"Biryani",k:"Outside",s:"ORDERED",d:today,h:"13:15",x:""},{id:6,c:"DINNER",n:"Egg curry",k:"Mathes",s:"EATEN",d:today,h:"20:45",x:"Encore."}];
-const seedW=[{id:1,d:moved,kg:70.2},{id:2,d:iso(Date.now()-8*864e5),kg:69.8},{id:3,d:iso(Date.now()-5*864e5),kg:69.9},{id:4,d:iso(Date.now()-2*864e5),kg:69.4},{id:5,d:today,kg:69.6}];
-let meals=store.get("m1",seedM),wts=store.get("w1",seedW),editId=null,R=0,wEd=null,pend="",F={q:"",c:"",k:"",s:"",d:""};
-const save=()=>{store.set("m1",meals);store.set("w1",wts)};
+const today=iso(Date.now()),moved=String(window.SUPABASE_CONFIG?.MOVE_IN_DATE||"").trim();
+const BUCKET="meal-photos";
+const cfg=window.SUPABASE_CONFIG||{};
+const supabaseReady=!!(window.supabase?.createClient && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_ANON_KEY.includes("PASTE_"));
+const sb=supabaseReady?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+const editor={user:null,profile:null,canEdit:false};
+let meals=[],wts=[],editId=null,R=0,wEd=null,pendingPhotoFile=null,currentImagePath=null,F={q:"",c:"",k:"",s:"",d:""};
+let realtimeChannel=null,authRun=0;
+function publicPhotoUrl(path){if(!path)return "";if(/^https?:\/\//i.test(path))return path;return sb?sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl:""}
+function setConnectionMessage(message){const el=$("#connection-note");if(el)el.textContent=message||""}
+function updateAccessUI(){
+  const signed=!!editor.canEdit;
+  $("#access-state").textContent=signed?`EDITOR MODE · ${editor.profile?.display_name||"AUTHORISED USER"}`:(supabaseReady?"PUBLIC ARCHIVE · READ ONLY":"DATABASE CONFIG REQUIRED");
+  $("#editor-login").hidden=signed;
+  $("#editor-logout").hidden=!signed;
+  $("#add").hidden=!signed;
+  $("#wf").hidden=!signed;
+  document.querySelectorAll("#meals [data-e], #meals [data-d], #wl [data-e], #wl [data-w]").forEach(b=>b.hidden=!signed);
+}
+function toMealUI(r){return {id:r.id,c:r.category,n:r.food_name||"",k:r.cook,s:r.status,d:r.meal_date,h:String(r.meal_time||"").slice(0,5),x:r.note||"",image_path:r.image_path||null,i:publicPhotoUrl(r.image_path)}}
+function toWeightUI(r){return {id:r.id,d:r.weigh_date,kg:Number(r.kg),created_at:r.created_at||""}}
+async function loadMeals(){
+  const {data,error}=await sb.from("meals").select("id,category,food_name,cook,status,meal_date,meal_time,note,image_path,created_at").order("meal_date",{ascending:false}).order("meal_time",{ascending:false});
+  if(error)throw error;meals=(data||[]).map(toMealUI);renderMeals();
+}
+async function loadWeights(){
+  const {data,error}=await sb.from("weights").select("id,weigh_date,kg,created_at").order("weigh_date",{ascending:true}).order("created_at",{ascending:true});
+  if(error)throw error;wts=(data||[]).map(toWeightUI);renderW();renderMeals();
+}
+async function loadAllData(){
+  if(!sb)return;
+  setConnectionMessage("LOADING THE PUBLIC RECORD...");
+  try{await Promise.all([loadMeals(),loadWeights()]);setConnectionMessage("");}
+  catch(error){console.error("Supabase load failed:",error);setConnectionMessage("DATABASE CONNECTION ERROR · OPEN THE CONSOLE OR CHECK SUPABASE CONFIGURATION");}
+}
+async function applySession(session){
+  const run=++authRun;editor.user=session?.user||null;editor.profile=null;editor.canEdit=false;
+  if(session?.user){
+    const {data,error}=await sb.from("profiles").select("id,display_name").eq("id",session.user.id).maybeSingle();
+    if(run!==authRun)return;
+    if(error){console.error("Editor allow-list check failed:",error);}
+    if(data){editor.profile=data;editor.canEdit=true;}
+    else{
+      await sb.auth.signOut();
+      editor.user=null;
+      setConnectionMessage("THIS ACCOUNT IS NOT AUTHORISED TO EDIT THE CHRONICLES.");
+    }
+  }
+  updateAccessUI();
+  renderMeals();renderW();
+}
+function subscribeRealtime(){
+  if(!sb)return;
+  if(realtimeChannel)sb.removeChannel(realtimeChannel);
+  let mealTimer=0,weightTimer=0;
+  realtimeChannel=sb.channel("1bhk-public-live-data")
+    .on("postgres_changes",{event:"*",schema:"public",table:"meals",select:["id","category","food_name","cook","status","meal_date","meal_time","note","image_path","created_at"]},()=>{clearTimeout(mealTimer);mealTimer=setTimeout(()=>loadMeals().catch(console.error),120)})
+    .on("postgres_changes",{event:"*",schema:"public",table:"weights",select:["id","weigh_date","kg","created_at"]},()=>{clearTimeout(weightTimer);weightTimer=setTimeout(()=>loadWeights().catch(console.error),120)})
+    .subscribe(status=>{if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setConnectionMessage("LIVE SYNC INTERRUPTED · RETRYING...");else if(status==="SUBSCRIBED")setConnectionMessage("")});
+}
+async function bootSupabase(){
+  updateAccessUI();
+  if(!sb){setConnectionMessage("ADD YOUR SUPABASE PUBLISHABLE KEY IN supabase-config.js TO LOAD LIVE RECORDS.");renderMeals();renderW();return;}
+  try{
+    const {data,error}=await sb.auth.getSession();if(error)throw error;
+    await applySession(data.session);
+    await loadAllData();subscribeRealtime();
+    sb.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{await applySession(session);await loadAllData();},0)});
+  }catch(error){console.error("Supabase startup failed:",error);setConnectionMessage("COULD NOT CONNECT TO THE CHRONICLES DATABASE.");}
+}
+function requireEditor(){if(editor.canEdit)return true;$("#auth-dialog").showModal();return false;}
+async function uploadMealPhoto(file){
+  if(!file)return null;
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Use a JPEG, PNG or WebP photo.");
+  if(file.size>10*1024*1024)throw new Error("Photo must be 10 MB or smaller.");
+  const ext=({"image/jpeg":"jpg","image/png":"png","image/webp":"webp"})[file.type];
+  const path=`${editor.user.id}/${crypto.randomUUID()}.${ext}`;
+  const {error}=await sb.storage.from(BUCKET).upload(path,file,{cacheControl:"3600",contentType:file.type,upsert:false});
+  if(error)throw error;return path;
+}
+async function removeMealPhoto(path){if(!path)return;const {error}=await sb.storage.from(BUCKET).remove([path]);if(error)console.warn("Could not remove old meal photo:",error.message)}
+const authDialog=$("#auth-dialog");
+$("#editor-login").onclick=()=>{$("#auth-message").textContent="";$("#auth-email").value="";authDialog.showModal();$("#auth-email").focus()};
+$("#auth-close").onclick=()=>authDialog.close();
+$("#auth-form").onsubmit=async e=>{e.preventDefault();if(!sb)return $("#auth-message").textContent="Supabase is not configured yet.";const email=$("#auth-email").value.trim();if(!email)return $("#auth-message").textContent="Enter an authorised email address.";const button=$("#auth-send");button.disabled=true;$("#auth-message").textContent="SENDING YOUR MAGIC LINK...";try{const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname,shouldCreateUser:false}});if(error)throw error;$("#auth-message").textContent="MAGIC LINK SENT. OPEN THE EMAIL ON THIS DEVICE TO ENTER EDITOR MODE.";}catch(error){console.error(error);$("#auth-message").textContent=error.message||"Could not send the sign-in link.";}finally{button.disabled=false}};
+$("#editor-logout").onclick=async()=>{if(!sb)return;const {error}=await sb.auth.signOut();if(error){setConnectionMessage(error.message);return;}editor.user=null;editor.profile=null;editor.canEdit=false;updateAccessUI();setConnectionMessage("SIGNED OUT · THE CHRONICLES REMAIN PUBLIC.");renderMeals();renderW()};
+
 
 /* ---- pixel sprites ---- */
 const body=["...kkkkkk...","..kHHHHHHk..","..kHHHHHHk..","..kBBBBBBk..","..kssssssk..","..kskssksk..","..kssrrssk..","...kkkkkk...",".kTTTTTTTTk.","kskTTTTTTksk","kskTTTTTTksk",".kkTTTTTTkk.","..kPPPPPPk..","..kPPkkPPk..","..kgk..kgk..",".kkkk..kkkk."];
@@ -257,43 +357,77 @@ document.querySelectorAll("#props .tomb").forEach((b,i)=>{b.querySelector(".ic")
 const FUN={EATEN:"Human successfully fed.",SKIPPED:"The refrigerator witnessed everything.",ORDERED:"Outside food saved civilization.","NOT PREPARED":"Another questionable experiment."};
 const CATS=["BREAKFAST","LUNCH","DINNER","SNACKS"];
 function renderMeals(){
- $("#meals").innerHTML=CATS.map(c=>{const m=meals.filter(x=>x.c===c&&x.d===today).sort((a,b)=>b.h.localeCompare(a.h))[0];
-  if(!m)return `<article class="meal"><h3 class="f">${c}</h3><p class="st">NOT PREPARED</p><p>Nothing reported yet. The kitchen is suspiciously clean.</p></article>`;
-  return `<article class="meal"><div class="row" style="justify-content:flex-start"><h3 class="f">${c}</h3>${ico(foodIco(m),4)}</div><p><b>${esc(m.n||"—  (skipped)")}</b></p><p>${esc(m.k==="Mathes"?"Chef Mathes reporting for duty.":"Cook: "+m.k)} · ${esc(m.h)}</p><p><span class="st ${m.s.replace(" ","")}">${m.s}</span></p><p><i>${FUN[m.s]}</i></p>${m.x?`<p>${esc(m.x)}</p>`:""}${m.i?`<img class="ph" src="${m.i}" alt="Photo of ${esc(m.n||"the meal")}">`:""}<div class="acts"><button class="btn s" data-e="${m.id}">EDIT</button><button class="btn s" data-d="${m.id}">DELETE</button></div></article>`}).join("");
- const eaten=meals.filter(m=>m.s==="EATEN"),cnt=k=>eaten.filter(m=>m.k===k).length;
- const dishes={};eaten.forEach(m=>{if(m.n&&m.k!=="Outside")dishes[m.n]=(dishes[m.n]||0)+1});const top=Object.entries(dishes).sort((a,b)=>b[1]-a[1])[0];
- const days=Math.max(1,Math.round((Date.now()-new Date(moved+"T00:00"))/864e5));
- const lb=[["Meals cooked by Mathes",cnt("Mathes")],["Meals cooked by Me",cnt("Me")],["Total meals recorded",meals.length],["Meals skipped",meals.filter(m=>m.s==="SKIPPED").length],["Meals ordered",meals.filter(m=>m.s==="ORDERED").length],["Most cooked dish",top?top[0]+" ×"+top[1]:"—"],["Days survived",days]];
- $("#board").innerHTML=lb.map(r=>`<div><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join("")+`<p class="lbl" style="color:#fff;margin:10px 0 0">Sample data · derived from the meal log</p>`;
- const t=meals.filter(m=>m.d===today).sort((a,b)=>b.h.localeCompare(a.h))[0];
- $("#hud").innerHTML=[["Date",new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})],["Days since moving out",days],["Latest meal",t?t.s:"NOT PREPARED"],["Latest weight (sample)",wts.length?wts.at(-1).kg+" kg":"—"]].map(r=>`<div><span class="lbl">${r[0]}</span><b>${esc(r[1])}</b></div>`).join("");
- save()}
-$("#meals").onclick=e=>{const d=e.target.dataset;if(d.d){meals=meals.filter(m=>m.id!=d.d);renderMeals()}if(d.e)openM(meals.find(m=>m.id==d.e))};
+  $("#meals").innerHTML=CATS.map(c=>{
+    const m=meals.filter(x=>x.c===c&&x.d===today).sort((a,b)=>b.h.localeCompare(a.h))[0];
+    if(!m)return `<article class="meal"><h3 class="f">${c}</h3><p class="st">NOT REPORTED</p><p>No report yet. The kitchen is suspiciously quiet.</p></article>`;
+    const actions=editor.canEdit?`<div class="acts"><button class="btn s" data-e="${esc(m.id)}" type="button">EDIT</button><button class="btn s" data-d="${esc(m.id)}" type="button">DELETE</button></div>`:"";
+    return `<article class="meal"><div class="row" style="justify-content:flex-start"><h3 class="f">${c}</h3>${ico(foodIco(m),4)}</div><p><b>${esc(m.n||"—  (skipped)")}</b></p><p>${esc(m.k==="Mathes"?"Chef Mathes reporting for duty.":"Cook: "+m.k)} · ${esc(m.h)}</p><p><span class="st ${m.s.replace(" ","")}">${esc(m.s)}</span></p><p><i>${FUN[m.s]}</i></p>${m.x?`<p>${esc(m.x)}</p>`:""}${m.i?`<img class="ph" src="${esc(m.i)}" alt="Photo of ${esc(m.n||"the meal")}">`:""}${actions}</article>`
+  }).join("");
+  const eaten=meals.filter(m=>m.s==="EATEN"),cnt=k=>eaten.filter(m=>m.k===k).length;
+  const dishes={};eaten.forEach(m=>{if(m.n&&m.k!=="Outside")dishes[m.n]=(dishes[m.n]||0)+1});const top=Object.entries(dishes).sort((a,b)=>b[1]-a[1])[0];
+  const days=moved?Math.max(0,Math.floor((new Date(today+"T00:00:00")-new Date(moved+"T00:00:00"))/864e5)):null;
+  const lb=[["Meals cooked by Mathes",cnt("Mathes")],["Meals cooked by Me",cnt("Me")],["Total meals recorded",meals.length],["Meals skipped",meals.filter(m=>m.s==="SKIPPED").length],["Meals ordered",meals.filter(m=>m.s==="ORDERED").length],["Most cooked dish",top?top[0]+" ×"+top[1]:"—"],["Days survived",days===null?"MOVE-IN DATE NOT SET":days]];
+  $("#board").innerHTML=lb.map(r=>`<div><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join("")+`<p class="lbl" style="color:#fff;margin:10px 0 0">Live counts · based on the public meal log</p>`;
+  const t=meals.filter(m=>m.d===today).sort((a,b)=>b.h.localeCompare(a.h))[0];
+  const latestWeight=[...wts].sort((a,b)=>(b.d+(b.created_at||"")).localeCompare(a.d+(a.created_at||"")))[0];
+  $("#hud").innerHTML=[["Date",new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})],["Days since moving out",days===null?"DATE NOT SET":days],["Latest meal",t?t.s:"NOT REPORTED"],["Latest weight",latestWeight?latestWeight.kg+" kg":"NO RECORD"]].map(r=>`<div><span class="lbl">${r[0]}</span><b>${esc(r[1])}</b></div>`).join("");
+  updateAccessUI();
+}
+$("#meals").onclick=async e=>{
+  const d=e.target.dataset;
+  if(d.e){if(!requireEditor())return;openM(meals.find(m=>m.id==d.e));}
+  if(d.d){if(!requireEditor())return;const m=meals.find(x=>x.id==d.d);if(!m||!confirm("Delete this food report?"))return;try{const {data,error}=await sb.from("meals").delete().eq("id",d.d).select("id,image_path");if(error)throw error;if(!data?.length)throw new Error("No record was deleted. Check editor permissions.");if(m.image_path)await removeMealPhoto(m.image_path);await loadMeals();}catch(error){console.error(error);alert("Could not delete meal: "+(error.message||"Unknown error"));}}
+};
 const md=$("#md");
-function openM(m){editId=m?m.id:null;$("#mt").textContent=m?"EDIT MEAL":"REPORT A MEAL";$("#mc").value=m?m.c:"BREAKFAST";$("#mn").value=m?m.n:"";$("#mk").value=m?m.k:"Mathes";$("#ms").value=m?m.s:"EATEN";$("#md2").value=m?m.d:today;$("#mh").value=m?m.h:new Date().toTimeString().slice(0,5);$("#mx").value=m?m.x:"";$("#me").textContent="";pend=m&&m.i||"";$("#mi").value="";sync();md.showModal();$("#mn").focus()}
+function openM(m){if(!requireEditor())return;editId=m?m.id:null;$("#mt").textContent=m?"EDIT MEAL":"REPORT A MEAL";$("#mc").value=m?m.c:"BREAKFAST";$("#mn").value=m?m.n:"";$("#mk").value=m?m.k:"Mathes";$("#ms").value=m?m.s:"EATEN";$("#md2").value=m?m.d:today;$("#mh").value=m?m.h:new Date().toTimeString().slice(0,5);$("#mx").value=m?m.x:"";$("#me").textContent="";currentImagePath=m?.image_path||null;pendingPhotoFile=null;$("#mi").value="";$("#photo-status").textContent=currentImagePath?"Existing photo will be kept unless you choose a replacement.":"JPEG, PNG or WebP · up to 10 MB";sync();md.showModal();$("#mn").focus()}
 function sync(){const sk=$("#ms").value==="SKIPPED";$("#mn").disabled=sk;if(sk)$("#mn").value=""}
 $("#ms").onchange=sync;$("#add").onclick=()=>openM();$("#mcl").onclick=()=>md.close();
-$("#mf").onsubmit=e=>{e.preventDefault();const r={c:$("#mc").value,n:$("#mn").value.trim(),k:$("#mk").value,s:$("#ms").value,d:$("#md2").value,h:$("#mh").value,x:$("#mx").value.trim(),i:pend};
- if(!r.d||!r.h)return $("#me").textContent="Please set a date and time.";
- if(r.s!=="SKIPPED"&&!r.n)return $("#me").textContent="Food name is required (unless the meal was skipped).";
- if(editId){meals=meals.map(m=>m.id===editId?{...m,...r}:m)}else meals.push({id:Date.now(),...r});
- md.close();renderMeals();const t=$("#toast");t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1900)};
+$("#mf").onsubmit=async e=>{
+  e.preventDefault();if(!requireEditor())return;
+  const r={c:$("#mc").value,n:$("#mn").value.trim(),k:$("#mk").value,s:$("#ms").value,d:$("#md2").value,h:$("#mh").value,x:$("#mx").value.trim()};
+  if(!r.d||!r.h)return $("#me").textContent="Please set a date and time.";
+  if(r.s!=="SKIPPED"&&!r.n)return $("#me").textContent="Food name is required (unless the meal was skipped).";
+  const button=$("#msv");button.disabled=true;$("#me").textContent="SAVING THE FOOD REPORT...";
+  let uploadedPath=null;
+  try{
+    let imagePath=currentImagePath;
+    if(pendingPhotoFile){uploadedPath=await uploadMealPhoto(pendingPhotoFile);imagePath=uploadedPath;}
+    const row={category:r.c,food_name:r.n,cook:r.k,status:r.s,meal_date:r.d,meal_time:r.h,note:r.x,image_path:imagePath};
+    let query=editId?sb.from("meals").update(row).eq("id",editId):sb.from("meals").insert(row);
+    const {data,error}=await query.select("id").single();if(error)throw error;
+    if(editId&&currentImagePath&&uploadedPath&&currentImagePath!==uploadedPath)await removeMealPhoto(currentImagePath);
+    md.close();pendingPhotoFile=null;currentImagePath=null;await loadMeals();
+    const t=$("#toast");t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1900);
+  }catch(error){console.error("Meal save failed:",error);if(uploadedPath)await removeMealPhoto(uploadedPath);$("#me").textContent=error.message||"Could not save this meal.";}
+  finally{button.disabled=false;}
+};
 const Q=["The fridge hums. It has seen things.","Expiry date: a rumour.","Found: half an onion and regret.","Milk status: philosophical.","The fridge light is on. Nobody is home."];
 $("#fridge").onclick=()=>$("#fq").textContent=Q[Math.random()*Q.length|0];
 
 /* ---- weight ---- */
 function renderW(){
- const all=[...wts].sort((a,b)=>a.d.localeCompare(b.d));const cur=all.at(-1),prev=all.at(-2),st=all[0];const s=R?all.filter(x=>x.d>=iso(Date.now()-R*864e5)):all;
+ const all=[...wts].sort((a,b)=>(a.d+(a.created_at||"")).localeCompare(b.d+(b.created_at||"")));const cur=all.at(-1),prev=all.at(-2),st=all[0];const s=R?all.filter(x=>x.d>=iso(Date.now()-R*864e5)):all;
  const f=n=>n==null?"—":n.toFixed(1)+" kg",ch=cur&&prev?(cur.kg-prev.kg):null;
  $("#wstats").innerHTML=`<div class="row"><span>Current <b class="f">${cur?f(cur.kg):"—"}</b></span><span>Previous <b class="f">${prev?f(prev.kg):"—"}</b></span><span>Change <b class="f">${ch==null?"—":(ch>0?"+":"")+ch.toFixed(1)+" kg"}</b></span><span>Start <b class="f">${st?f(st.kg):"—"}</b></span></div>`;
- const svg=$("#chart");if(s.length<2){svg.innerHTML=`<text x="160" y="68" fill="#fff" text-anchor="middle" font-size="11">Add two entries to see a line.</text>`}else{
+ const svg=$("#chart");if(s.length<2){svg.innerHTML=`<text x="160" y="68" fill="#fff" text-anchor="middle" font-size="11">${s.length?"One record. The story is just beginning.":"No public weight records yet."}</text>`}else{
   const v=s.map(x=>x.kg),lo=Math.min(...v)-.5,hi=Math.max(...v)+.5,X=i=>20+i*(280/(s.length-1)),Y=k=>110-(k-lo)/(hi-lo)*90;
   svg.innerHTML=`<polyline fill="none" stroke="#72DCEB" stroke-width="3" points="${s.map((x,i)=>X(i)+","+Y(x.kg)).join(" ")}"/>`+s.map((x,i)=>`<rect x="${X(i)-3}" y="${Y(x.kg)-3}" width="6" height="6" fill="#FFC83D"><title>${x.d}: ${x.kg} kg</title></rect>`).join("")+`<text x="20" y="126" fill="#fff" font-size="8">${s[0].d}</text><text x="300" y="126" fill="#fff" font-size="8" text-anchor="end">${s.at(-1).d}</text>`}
- $("#wl").innerHTML=[...s].reverse().slice(0,6).map(x=>`<div class="row box" style="margin:8px 0;padding:8px 12px"><span>${x.d} · <b>${x.kg} kg</b></span><span><button class="btn s" data-e="${x.id}">EDIT</button> <button class="btn s" data-w="${x.id}">DELETE</button></span></div>`).join("");
- save();renderMeals.skip||0}
-$("#wl").onclick=e=>{const w=e.target.dataset.e;if(w){const x=wts.find(y=>y.id==w);wEd=x.id;$("#wk").value=x.kg;$("#wd").value=x.d;$("#wk").focus()}const id=e.target.dataset.w;if(id){wts=wts.filter(w=>w.id!=id);renderW();renderMeals()}};
+ $("#wl").innerHTML=s.length?[...s].reverse().slice(0,6).map(x=>`<div class="row box" style="margin:8px 0;padding:8px 12px"><span>${esc(x.d)} · <b>${x.kg.toFixed(1)} kg</b></span>${editor.canEdit?`<span><button class="btn s" data-e="${esc(x.id)}" type="button">EDIT</button> <button class="btn s" data-w="${esc(x.id)}" type="button">DELETE</button></span>`:""}</div>`).join(""):`<p class="ctr f">No weight history has been recorded yet.</p>`;
+ updateAccessUI();
+}
+$("#wl").onclick=async e=>{
+ if(!editor.canEdit)return;
+ const id=e.target.dataset.e;if(id){const x=wts.find(y=>y.id==id);if(x){wEd=x.id;$("#wk").value=x.kg;$("#wd").value=x.d;$("#we").textContent="Editing an existing entry.";$("#wk").focus();$("#wf").scrollIntoView({behavior:"smooth",block:"center"});}}
+ const del=e.target.dataset.w;if(del){const x=wts.find(y=>y.id==del);if(!x||!confirm("Delete this weight entry?"))return;try{const {data,error}=await sb.from("weights").delete().eq("id",del).select("id");if(error)throw error;if(!data?.length)throw new Error("No record was deleted. Check editor permissions.");await loadWeights();}catch(error){console.error(error);alert("Could not delete weight entry: "+(error.message||"Unknown error"));}}
+};
 $("#wd").value=today;$("#rng").onclick=e=>{const r=e.target.dataset.r;if(r!=null){R=+r;renderW()}};
-$("#wf").onsubmit=e=>{e.preventDefault();const kg=parseFloat($("#wk").value);if(!(kg>=20&&kg<=300)||!$("#wd").value)return $("#we").textContent="Enter a weight between 20 and 300 kg and a date.";$("#we").textContent="";if(wEd)wts=wts.map(w=>w.id===wEd?{...w,d:$("#wd").value,kg}:w);else wts.push({id:Date.now(),d:$("#wd").value,kg});wEd=null;$("#wk").value="";renderW();renderMeals()};
+$("#wf").onsubmit=async e=>{
+ e.preventDefault();if(!requireEditor())return;const kg=parseFloat($("#wk").value),date=$("#wd").value;if(!(kg>=20&&kg<=300)||!date)return $("#we").textContent="Enter a weight between 20 and 300 kg and a date.";
+ $("#we").textContent="SAVING CHARACTER STATS...";const button=$("#wf button[type=submit], #wf button:not([type])");if(button)button.disabled=true;
+ try{const row={weigh_date:date,kg};let query=wEd?sb.from("weights").update(row).eq("id",wEd):sb.from("weights").insert(row);const {error}=await query.select("id").single();if(error)throw error;wEd=null;$("#wk").value="";$("#we").textContent="";await loadWeights();}
+ catch(error){console.error("Weight save failed:",error);$("#we").textContent=error.message||"Could not save this weight entry.";}
+ finally{if(button)button.disabled=false;}
+};
 
 /* ---- food + appliance sprites ---- */
 const ICO={egg:[["..wwww..",".wwwwww.","wwwyywww","wwyyyyww","wwwyywww",".wwwwww.","..wwww..","........"],{w:"#fff",y:"#FFC83D"}],bowl:[["..y.y.y.","yyyyyyyy","yoyoyoyo","oyoyoyoy","rrrrrrrr",".rrrrrr.","..rrrr..","........"],{y:"#FFC83D",o:"#f08a3a",r:"#d9534f"}],toast:[["..bbbb..",".bccccb.","bccccccb","bccccccb","bccccccb","bccccccb","bccccccb","bbbbbbbb"],{b:"#c98a4b",c:"#ffe2a0"}],bag:[["..wwww..","..w..w..","rrrrrrrr","rrwwwwrr","rrwwwwrr","rrrrrrrr","rrrrrrrr","rrrrrrrr"],{w:"#fff",r:"#d9534f"}],plate:[["..wwww..",".w....w.","w......w","w......w","w......w",".w....w.","..wwww..","........"],{w:"#fff"}],pot:[["...ww...","gggggggg","gggggggg","gggggggg","gggggggg","gggggggg",".gggggg.","........"],{g:"#8a8fa8",w:"#fff"}]};
@@ -322,10 +456,12 @@ const MEM=[["WASHING MACHINE","#72DCEB","Taken from us too soon. You now have a 
 $("#yard").innerHTML=MEM.map((m,i)=>`<div class="ctr"><button class="tomb" data-i="${i}" aria-describedby="ep${i}"><span class="ic"></span><div class="f" style="font-size:15px;margin-top:6px">${m[0]}</div></button><div class="ep" id="ep${i}">${m[2]}</div></div>`).join("");
 document.querySelectorAll(".tomb").forEach((b,i)=>{const ic0=b.querySelector(".ic");ic0.style.cssText="position:relative;display:inline-block";ic0.append(spr(tomb,{...base,g:MEM[i][1],d:MEM[i][1]},9));const gl=spr(MI[i],dk,6);gl.style.cssText="position:absolute;left:30px;top:22px";ic0.append(gl);b.onclick=()=>{b.classList.remove("sh");void b.offsetWidth;b.classList.add("sh");$("#ep"+i).textContent=MEM[i][3]}});
 
-const _rm=renderMeals;renderMeals=()=>{_rm();renderArc()};renderMeals();renderW();renderMeals();
+const _rm=renderMeals;renderMeals=()=>{_rm();renderArc()};
+$("#photo-status").textContent="JPEG, PNG or WebP · up to 10 MB";
+$("#mi").onchange=e=>{const f=e.target.files[0];pendingPhotoFile=f||null;$("#photo-status").textContent=f?`Selected: ${f.name} (${(f.size/1024/1024).toFixed(1)} MB)`:currentImagePath?"Existing photo will be kept unless you choose a replacement.":"JPEG, PNG or WebP · up to 10 MB"};
+renderMeals();renderW();bootSupabase();
 
 /* ---- photo upload, nav highlight, parallax ---- */
-$("#mi").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,240/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;c.getContext("2d").drawImage(im,0,0,c.width,c.height);pend=c.toDataURL("image/jpeg",.7)};im.src=rd.result};rd.readAsDataURL(f)};
 {const L=[...document.querySelectorAll("#nav a")],io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)L.forEach(a=>a.classList.toggle("on",a.getAttribute("href")==="#"+e.target.id))}),{rootMargin:"-45% 0px -50% 0px"});L.forEach(a=>io.observe($(a.getAttribute("href"))))}
 const PX=[...document.querySelectorAll(".cloud")].map((e,i)=>[e,.1+i*.03]).concat([...document.querySelectorAll(".fl")].map(e=>[e,.06]));
 if(!matchMedia("(prefers-reduced-motion:reduce)").matches){let t=0;addEventListener("scroll",()=>{if(t)return;t=requestAnimationFrame(()=>{t=0;const y=scrollY;if(y>innerHeight*1.5)return;PX.forEach(([e,k])=>e.style.translate="0 "+y*k+"px")})},{passive:true})}

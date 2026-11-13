@@ -1,27 +1,39 @@
-# Setup: Vercel + Supabase + monitoring
+# Deployment and Supabase checklist
 
-## 1. Deploy to Vercel (5 min)
-1. Put this folder in a GitHub repo (index.html and the icons at the repo root).
-2. vercel.com > Add New > Project > import the repo.
-3. Framework preset: Other. Leave build command empty. Output directory: `.`
-4. Deploy. Then open `index.html` and replace both `YOUR-DOMAIN.vercel.app` with your real domain, commit, and push.
-5. Check the link preview with the Facebook Sharing Debugger or opengraph.xyz.
+## 1. Add the public client key
+- Supabase Dashboard → Project Settings → API Keys.
+- Copy the **publishable key** (or legacy `anon` public key).
+- Paste it into `supabase-config.js` as `SUPABASE_ANON_KEY`.
+- Never use the `service_role` key or a secret key in browser code.
 
-## 2. Database (Supabase)
-1. supabase.com > New project (free tier is fine). Save the project URL and the `anon` public key (Settings > API).
-2. SQL Editor: paste `supabase.sql` (edit the two emails) and run it.
-3. Authentication > Providers: enable Email (magic link). Add your Vercel URL under URL Configuration > Site URL.
-4. The anon key is meant to be public. Row Level Security in the SQL is what protects your data, so do not skip it.
+## 2. Authentication
+- Email provider enabled.
+- New user signups disabled.
+- Both existing Auth users are registered in `public.profiles`.
+- Site URL: `https://mathes-was-not-ready.vercel.app`.
+- Redirect allow-list includes the production origin and local development URLs.
+- Editor sign-in uses email magic links; only allow-listed profiles receive editor permissions.
 
-## 3. Wiring the frontend (not done yet)
-The site keeps meals and weights in `meals` / `wts` arrays and saves through `store` and `save()`.
-Plan: load both tables on start, map fields, and make `save()` upsert changes and delete removed rows. Add a small login button so only you two can write. Field mapping:
-meals: c=category, n=food_name, k=cook, s=status, d=meal_date, h=meal_time, x=note, i=image
-weights: d=weigh_date, kg=kg
-Load supabase-js from a pinned CDN version, for example `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4`.
+## 3. Database assumptions
+- Run `public-column-grants.sql` in SQL Editor to keep anonymous reads limited to the public columns used by the page.
+The frontend expects these existing columns:
+- `meals`: `id`, `category`, `food_name`, `cook`, `status`, `meal_date`, `meal_time`, `note`, `image_path`, `created_at`.
+- `weights`: `id`, `weigh_date`, `kg`, `created_at`.
+- `profiles`: `id`, `display_name`.
 
-## 4. Monitoring
-- Visitors: Vercel project > Analytics > Enable (the script is already in index.html).
-- Progress: Supabase > Table Editor for raw rows, and `select * from weekly_summary;` for eaten / skipped / ordered per week.
-- Errors: Vercel project > Logs, and the browser console while testing.
-- Backups: Supabase > Database > Backups (daily on paid plans). On free, export CSV from the Table Editor now and then.
+Public SELECT is expected for meal/weight columns used by the page; INSERT/UPDATE/DELETE remain restricted to authenticated users for whom `public.is_authorized_user()` is true. `supabase_realtime` should include `meals` and `weights`.
+
+## 4. Storage
+- Bucket: `meal-photos`.
+- Public bucket: enabled (anyone with an image URL can view files).
+- Upload/update/delete policies: authenticated + `public.is_authorized_user()`.
+- Max file size shown in the current bucket: 10 MB.
+- Allowed types: JPEG, PNG, WebP.
+
+## 5. Local testing
+From the folder root: `python -m http.server 5500`, then open `http://localhost:5500`.
+
+Test: public anonymous read, magic-link editor login for both accounts, meal create/edit/delete, image upload and display, weight create/edit/delete, and two-browser Realtime sync.
+
+## 6. Vercel
+Static deployment: Framework preset `Other`, no build command, output directory `.`. Deploy `index.html`, `supabase-config.js`, and all four image/icon assets from the project root.
