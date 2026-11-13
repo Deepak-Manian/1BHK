@@ -221,20 +221,32 @@ const today=iso(Date.now()),moved=String(window.SUPABASE_CONFIG?.MOVE_IN_DATE||"
 const BUCKET="meal-photos";
 const cfg=window.SUPABASE_CONFIG||{};
 const supabaseReady=!!(window.supabase?.createClient && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_ANON_KEY.includes("PASTE_"));
-const sb=supabaseReady?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+const sb=supabaseReady?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:"pkce"}}):null;
 const editor={user:null,profile:null,canEdit:false};
 let meals=[],wts=[],editId=null,R=0,wEd=null,pendingPhotoFile=null,currentImagePath=null,F={q:"",c:"",k:"",s:"",d:""};
 let realtimeChannel=null,authRun=0;
+// Register immediately so the initial PKCE callback/session event cannot be missed.
+// Supabase recommends subscribing to auth events for post-redirect sign-ins.
+if(sb){
+  sb.auth.onAuthStateChange((event,session)=>{
+    if(!["INITIAL_SESSION","SIGNED_IN","SIGNED_OUT","TOKEN_REFRESHED","USER_UPDATED"].includes(event))return;
+    console.info("[1BHK auth]",event,{hasSession:!!session,userId:session?.user?.id||null});
+    setTimeout(async()=>{
+      try{await applySession(session);await loadAllData();}
+      catch(error){console.error("Auth state handling failed:",error);setConnectionMessage("SIGNED IN, BUT EDITOR STATUS COULD NOT BE UPDATED. CHECK THE CONSOLE.");}
+    },0);
+  });
+}
 function publicPhotoUrl(path){if(!path)return "";if(/^https?:\/\//i.test(path))return path;return sb?sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl:""}
 function setConnectionMessage(message){const el=$("#connection-note");if(el)el.textContent=message||""}
 function updateAccessUI(){
-  const signed=!!editor.canEdit;
-  $("#access-state").textContent=signed?`EDITOR MODE · ${editor.profile?.display_name||"AUTHORISED USER"}`:(supabaseReady?"PUBLIC ARCHIVE · READ ONLY":"DATABASE CONFIG REQUIRED");
-  $("#editor-login").hidden=signed;
-  $("#editor-logout").hidden=!signed;
-  $("#add").hidden=!signed;
-  $("#wf").hidden=!signed;
-  document.querySelectorAll("#meals [data-e], #meals [data-d], #wl [data-e], #wl [data-w]").forEach(b=>b.hidden=!signed);
+  const signedIn=!!editor.user,canEdit=!!editor.canEdit;
+  $("#access-state").textContent=canEdit?`EDITOR MODE · ${editor.profile?.display_name||"AUTHORISED USER"}`:(signedIn?"SIGNED IN · VIEW ONLY":(supabaseReady?"PUBLIC ARCHIVE · READ ONLY":"DATABASE CONFIG REQUIRED"));
+  $("#editor-login").hidden=signedIn;
+  $("#editor-logout").hidden=!signedIn;
+  $("#add").hidden=!canEdit;
+  $("#wf").hidden=!canEdit;
+  document.querySelectorAll("#meals [data-e], #meals [data-d], #wl [data-e], #wl [data-w]").forEach(b=>b.hidden=!canEdit);
 }
 function toMealUI(r){return {id:r.id,c:r.category,n:r.food_name||"",k:r.cook,s:r.status,d:r.meal_date,h:String(r.meal_time||"").slice(0,5),x:r.note||"",image_path:r.image_path||null,i:publicPhotoUrl(r.image_path)}}
 function toWeightUI(r){return {id:r.id,d:r.weigh_date,kg:Number(r.kg),created_at:r.created_at||""}}
@@ -257,13 +269,19 @@ async function applySession(session){
   if(session?.user){
     const {data,error}=await sb.from("profiles").select("id,display_name").eq("id",session.user.id).maybeSingle();
     if(run!==authRun)return;
-    if(error){console.error("Editor allow-list check failed:",error);}
-    if(data){editor.profile=data;editor.canEdit=true;}
-    else{
-      await sb.auth.signOut();
-      editor.user=null;
-      setConnectionMessage("THIS ACCOUNT IS NOT AUTHORISED TO EDIT THE CHRONICLES.");
+    if(error){
+      // A profile-query/network/RLS error is not proof that the user is unauthorised.
+      // Keep the Supabase session so the user does not have to request another email.
+      console.error("Editor allow-list check failed:",error);
+      setConnectionMessage("SIGNED IN · COULD NOT VERIFY EDITOR PERMISSIONS. CHECK THE PROFILES POLICY.");
+    }else if(data){
+      editor.profile=data;editor.canEdit=true;setConnectionMessage("");
+    }else{
+      // Keep the authenticated session in view-only mode; never loop the user through email login.
+      setConnectionMessage("ACCOUNT SIGNED IN BUT NOT ON THE EDITOR ALLOW-LIST.");
     }
+  }else{
+    setConnectionMessage("");
   }
   updateAccessUI();
   renderMeals();renderW();
@@ -281,10 +299,10 @@ async function bootSupabase(){
   updateAccessUI();
   if(!sb){setConnectionMessage("ADD YOUR SUPABASE PUBLISHABLE KEY IN supabase-config.js TO LOAD LIVE RECORDS.");renderMeals();renderW();return;}
   try{
+    // The early onAuthStateChange listener handles INITIAL_SESSION and PKCE redirects.
     const {data,error}=await sb.auth.getSession();if(error)throw error;
     await applySession(data.session);
     await loadAllData();subscribeRealtime();
-    sb.auth.onAuthStateChange((_event,session)=>{setTimeout(async()=>{await applySession(session);await loadAllData();},0)});
   }catch(error){console.error("Supabase startup failed:",error);setConnectionMessage("COULD NOT CONNECT TO THE CHRONICLES DATABASE.");}
 }
 function requireEditor(){if(editor.canEdit)return true;$("#auth-dialog").showModal();return false;}
@@ -301,7 +319,7 @@ async function removeMealPhoto(path){if(!path)return;const {error}=await sb.stor
 const authDialog=$("#auth-dialog");
 $("#editor-login").onclick=()=>{$("#auth-message").textContent="";$("#auth-email").value="";authDialog.showModal();$("#auth-email").focus()};
 $("#auth-close").onclick=()=>authDialog.close();
-$("#auth-form").onsubmit=async e=>{e.preventDefault();if(!sb)return $("#auth-message").textContent="Supabase is not configured yet.";const email=$("#auth-email").value.trim();if(!email)return $("#auth-message").textContent="Enter an authorised email address.";const button=$("#auth-send");button.disabled=true;$("#auth-message").textContent="SENDING YOUR MAGIC LINK...";try{const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname,shouldCreateUser:false}});if(error)throw error;$("#auth-message").textContent="MAGIC LINK SENT. OPEN THE EMAIL ON THIS DEVICE TO ENTER EDITOR MODE.";}catch(error){console.error(error);$("#auth-message").textContent=error.message||"Could not send the sign-in link.";}finally{button.disabled=false}};
+$("#auth-form").onsubmit=async e=>{e.preventDefault();if(!sb)return $("#auth-message").textContent="Supabase is not configured yet.";const email=$("#auth-email").value.trim();if(!email)return $("#auth-message").textContent="Enter an authorised email address.";const button=$("#auth-send");button.disabled=true;$("#auth-message").textContent="SENDING YOUR MAGIC LINK...";try{const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+window.location.pathname,shouldCreateUser:false}});if(error)throw error;$("#auth-message").textContent="MAGIC LINK SENT. OPEN THE EMAIL IN THIS SAME BROWSER PROFILE. DO NOT REQUEST ANOTHER LINK.";}catch(error){console.error(error);const message=error.message||"Could not send the sign-in link.";$("#auth-message").textContent=(error.code==="over_email_send_rate_limit"||/email rate limit exceeded/i.test(message))?"EMAIL LIMIT REACHED. STOP REQUESTING LINKS FOR NOW; USE THE LATEST EMAIL LINK IF IT IS STILL VALID.":message;}finally{button.disabled=false}};
 $("#editor-logout").onclick=async()=>{if(!sb)return;const {error}=await sb.auth.signOut();if(error){setConnectionMessage(error.message);return;}editor.user=null;editor.profile=null;editor.canEdit=false;updateAccessUI();setConnectionMessage("SIGNED OUT · THE CHRONICLES REMAIN PUBLIC.");renderMeals();renderW()};
 
 
