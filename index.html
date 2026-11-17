@@ -163,7 +163,7 @@ label{display:block;font:700 11px Silkscreen;margin:10px 0 3px;text-transform:up
  <p class="ctr f">Not all progress is measured in XP. <span class="smp">PUBLIC CHARACTER STATS</span></p>
  <div class="box" id="wstats"></div>
  <div class="box"><div class="row" id="rng" style="justify-content:flex-start;margin-bottom:8px"><button class="btn s" data-r="7">7D</button><button class="btn s" data-r="30">30D</button><button class="btn s" data-r="90">90D</button><button class="btn s" data-r="0">ALL</button></div><svg class="ch" id="chart" viewBox="0 0 320 130" role="img" aria-label="Weight history line chart"></svg></div>
- <form class="box row" id="wf" hidden><input id="wk" type="number" step="0.1" min="20" max="300" placeholder="Weight (kg)" aria-label="Weight in kg" style="flex:1;min-width:110px"><input id="wd" type="date" aria-label="Date" style="flex:1;min-width:130px"><button class="btn">[ UPDATE CHARACTER STATS ]</button><span class="err" id="we" style="width:100%;color:#ffd0d0"></span></form>
+ <form class="box row" id="wf" hidden><input id="wk" type="number" step="0.1" min="20" max="300" placeholder="Weight (kg)" aria-label="Weight in kg" style="flex:1;min-width:110px"><input id="wd" type="date" aria-label="Date" style="flex:1;min-width:130px"><button class="btn" id="wsubmit">[ UPDATE CHARACTER STATS ]</button><button class="btn s" type="button" id="wcancel" hidden>CANCEL EDIT</button><span class="err" id="we" style="width:100%;color:#ffd0d0"></span></form>
  <div id="wl"></div>
 </div></section>
 
@@ -246,7 +246,8 @@ function updateAccessUI(){
   $("#editor-logout").hidden=!signedIn;
   $("#add").hidden=!canEdit;
   $("#wf").hidden=!canEdit;
-  document.querySelectorAll("#meals [data-e], #meals [data-d], #wl [data-e], #wl [data-w]").forEach(b=>b.hidden=!canEdit);
+  document.querySelectorAll("#meals [data-e], #meals [data-d], #log [data-archive-e], #log [data-archive-d], #wl [data-e], #wl [data-w]").forEach(b=>b.hidden=!canEdit);
+  const weightCancel=$("#wcancel");if(weightCancel)weightCancel.hidden=!canEdit||!wEd;
 }
 function toMealUI(r){return {id:r.id,c:r.category,n:r.food_name||"",k:r.cook,s:r.status,d:r.meal_date,h:String(r.meal_time||"").slice(0,5),x:r.note||"",image_path:r.image_path||null,i:publicPhotoUrl(r.image_path)}}
 function toWeightUI(r){return {id:r.id,d:r.weigh_date,kg:Number(r.kg),created_at:r.created_at||""}}
@@ -395,10 +396,23 @@ function renderMeals(){
   $("#hud").innerHTML=[["Date",new Date().toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})],["Days since moving out",days===null?"DATE NOT SET":days],["Latest meal",t?t.s:"NOT REPORTED"],["Latest weight",latestWeight?latestWeight.kg+" kg":"NO RECORD"]].map(r=>`<div><span class="lbl">${r[0]}</span><b>${esc(r[1])}</b></div>`).join("");
   updateAccessUI();
 }
+async function deleteMealRecord(id){
+  if(!requireEditor())return;
+  const meal=meals.find(m=>String(m.id)===String(id));
+  if(!meal||!confirm("Delete this food report permanently?"))return;
+  try{
+    const {data,error}=await sb.from("meals").delete().eq("id",id).select("id,image_path");
+    if(error)throw error;
+    if(!data?.length)throw new Error("No database row was deleted. Check your editor session and meals DELETE policy.");
+    if(meal.image_path)await removeMealPhoto(meal.image_path);
+    await loadMeals();
+    setConnectionMessage("FOOD REPORT DELETED FROM THE DATABASE.");
+  }catch(error){console.error("Meal delete failed:",error);alert("Could not delete meal: "+(error.message||"Unknown error"));}
+}
 $("#meals").onclick=async e=>{
-  const d=e.target.dataset;
-  if(d.e){if(!requireEditor())return;openM(meals.find(m=>m.id==d.e));}
-  if(d.d){if(!requireEditor())return;const m=meals.find(x=>x.id==d.d);if(!m||!confirm("Delete this food report?"))return;try{const {data,error}=await sb.from("meals").delete().eq("id",d.d).select("id,image_path");if(error)throw error;if(!data?.length)throw new Error("No record was deleted. Check editor permissions.");if(m.image_path)await removeMealPhoto(m.image_path);await loadMeals();}catch(error){console.error(error);alert("Could not delete meal: "+(error.message||"Unknown error"));}}
+  const button=e.target.closest("button[data-e],button[data-d]");if(!button)return;
+  if(button.dataset.e){if(!requireEditor())return;const meal=meals.find(m=>String(m.id)===button.dataset.e);if(meal)openM(meal);}
+  else if(button.dataset.d)await deleteMealRecord(button.dataset.d);
 };
 const md=$("#md");
 function openM(m){if(!requireEditor())return;editId=m?m.id:null;$("#mt").textContent=m?"EDIT MEAL":"REPORT A MEAL";$("#mc").value=m?m.c:"BREAKFAST";$("#mn").value=m?m.n:"";$("#mk").value=m?m.k:"Mathes";$("#ms").value=m?m.s:"EATEN";$("#md2").value=m?m.d:today;$("#mh").value=m?m.h:new Date().toTimeString().slice(0,5);$("#mx").value=m?m.x:"";$("#me").textContent="";currentImagePath=m?.image_path||null;pendingPhotoFile=null;$("#mi").value="";$("#photo-status").textContent=currentImagePath?"Existing photo will be kept unless you choose a replacement.":"JPEG, PNG or WebP · up to 10 MB";sync();md.showModal();$("#mn").focus()}
@@ -415,10 +429,12 @@ $("#mf").onsubmit=async e=>{
     let imagePath=currentImagePath;
     if(pendingPhotoFile){uploadedPath=await uploadMealPhoto(pendingPhotoFile);imagePath=uploadedPath;}
     const row={category:r.c,food_name:r.n,cook:r.k,status:r.s,meal_date:r.d,meal_time:r.h,note:r.x,image_path:imagePath};
-    let query=editId?sb.from("meals").update(row).eq("id",editId):sb.from("meals").insert(row);
+    const wasEditing=!!editId;
+    let query=wasEditing?sb.from("meals").update(row).eq("id",editId):sb.from("meals").insert(row);
     const {data,error}=await query.select("id").single();if(error)throw error;
-    if(editId&&currentImagePath&&uploadedPath&&currentImagePath!==uploadedPath)await removeMealPhoto(currentImagePath);
-    md.close();pendingPhotoFile=null;currentImagePath=null;await loadMeals();
+    if(wasEditing&&currentImagePath&&uploadedPath&&currentImagePath!==uploadedPath)await removeMealPhoto(currentImagePath);
+    md.close();editId=null;pendingPhotoFile=null;currentImagePath=null;await loadMeals();
+    const toastTitle=$("#toast h2");toastTitle.innerHTML=wasEditing?"MEAL UPDATED.<br>THE RECORD HAS BEEN CORRECTED.":"FOOD REPORT ACCEPTED.<br>HUMANITY SURVIVES ANOTHER DAY.";
     const t=$("#toast");t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1900);
   }catch(error){console.error("Meal save failed:",error);if(uploadedPath)await removeMealPhoto(uploadedPath);$("#me").textContent=error.message||"Could not save this meal.";}
   finally{button.disabled=false;}
@@ -434,19 +450,24 @@ function renderW(){
  const svg=$("#chart");if(s.length<2){svg.innerHTML=`<text x="160" y="68" fill="#fff" text-anchor="middle" font-size="11">${s.length?"One record. The story is just beginning.":"No public weight records yet."}</text>`}else{
   const v=s.map(x=>x.kg),lo=Math.min(...v)-.5,hi=Math.max(...v)+.5,X=i=>20+i*(280/(s.length-1)),Y=k=>110-(k-lo)/(hi-lo)*90;
   svg.innerHTML=`<polyline fill="none" stroke="#72DCEB" stroke-width="3" points="${s.map((x,i)=>X(i)+","+Y(x.kg)).join(" ")}"/>`+s.map((x,i)=>`<rect x="${X(i)-3}" y="${Y(x.kg)-3}" width="6" height="6" fill="#FFC83D"><title>${x.d}: ${x.kg} kg</title></rect>`).join("")+`<text x="20" y="126" fill="#fff" font-size="8">${s[0].d}</text><text x="300" y="126" fill="#fff" font-size="8" text-anchor="end">${s.at(-1).d}</text>`}
- $("#wl").innerHTML=s.length?[...s].reverse().slice(0,6).map(x=>`<div class="row box" style="margin:8px 0;padding:8px 12px"><span>${esc(x.d)} · <b>${x.kg.toFixed(1)} kg</b></span>${editor.canEdit?`<span><button class="btn s" data-e="${esc(x.id)}" type="button">EDIT</button> <button class="btn s" data-w="${esc(x.id)}" type="button">DELETE</button></span>`:""}</div>`).join(""):`<p class="ctr f">No weight history has been recorded yet.</p>`;
+ $("#wl").innerHTML=s.length?[...s].reverse().map(x=>`<div class="row box" style="margin:8px 0;padding:8px 12px"><span>${esc(x.d)} · <b>${x.kg.toFixed(1)} kg</b></span>${editor.canEdit?`<span><button class="btn s" data-e="${esc(x.id)}" type="button" aria-label="Edit weight entry for ${esc(x.d)}">EDIT</button> <button class="btn s" data-w="${esc(x.id)}" type="button" aria-label="Delete weight entry for ${esc(x.d)}">DELETE</button></span>`:""}</div>`).join(""):`<p class="ctr f">No weight history has been recorded yet.</p>`;
  updateAccessUI();
 }
+function resetWeightEditor(){wEd=null;$("#wk").value="";$("#wd").value=today;$("#we").textContent="";$("#wsubmit").textContent="[ UPDATE CHARACTER STATS ]";$("#wcancel").hidden=true;}
+$("#wcancel").onclick=resetWeightEditor;
 $("#wl").onclick=async e=>{
  if(!editor.canEdit)return;
- const id=e.target.dataset.e;if(id){const x=wts.find(y=>y.id==id);if(x){wEd=x.id;$("#wk").value=x.kg;$("#wd").value=x.d;$("#we").textContent="Editing an existing entry.";$("#wk").focus();$("#wf").scrollIntoView({behavior:"smooth",block:"center"});}}
- const del=e.target.dataset.w;if(del){const x=wts.find(y=>y.id==del);if(!x||!confirm("Delete this weight entry?"))return;try{const {data,error}=await sb.from("weights").delete().eq("id",del).select("id");if(error)throw error;if(!data?.length)throw new Error("No record was deleted. Check editor permissions.");await loadWeights();}catch(error){console.error(error);alert("Could not delete weight entry: "+(error.message||"Unknown error"));}}
+ const button=e.target.closest("button[data-e],button[data-w]");if(!button)return;
+ const id=button.dataset.e;
+ if(id){const x=wts.find(y=>String(y.id)===id);if(x){wEd=x.id;$("#wk").value=x.kg;$("#wd").value=x.d;$("#we").textContent="EDITING EXISTING DATABASE ENTRY · CHANGE THE VALUE AND SAVE.";$("#wsubmit").textContent="[ SAVE WEIGHT CHANGES ]";$("#wcancel").hidden=false;$("#wk").focus();$("#wf").scrollIntoView({behavior:"smooth",block:"center"});}}
+ const del=button.dataset.w;
+ if(del){const x=wts.find(y=>String(y.id)===del);if(!x||!confirm("Delete this weight entry permanently?"))return;try{const {data,error}=await sb.from("weights").delete().eq("id",del).select("id");if(error)throw error;if(!data?.length)throw new Error("No database row was deleted. Check your editor session and weights DELETE policy.");if(wEd===x.id)resetWeightEditor();await loadWeights();setConnectionMessage("WEIGHT ENTRY DELETED FROM THE DATABASE.");}catch(error){console.error("Weight delete failed:",error);alert("Could not delete weight entry: "+(error.message||"Unknown error"));}}
 };
 $("#wd").value=today;$("#rng").onclick=e=>{const r=e.target.dataset.r;if(r!=null){R=+r;renderW()}};
 $("#wf").onsubmit=async e=>{
  e.preventDefault();if(!requireEditor())return;const kg=parseFloat($("#wk").value),date=$("#wd").value;if(!(kg>=20&&kg<=300)||!date)return $("#we").textContent="Enter a weight between 20 and 300 kg and a date.";
  $("#we").textContent="SAVING CHARACTER STATS...";const button=$("#wf button[type=submit], #wf button:not([type])");if(button)button.disabled=true;
- try{const row={weigh_date:date,kg};let query=wEd?sb.from("weights").update(row).eq("id",wEd):sb.from("weights").insert(row);const {error}=await query.select("id").single();if(error)throw error;wEd=null;$("#wk").value="";$("#we").textContent="";await loadWeights();}
+ try{const wasEditing=!!wEd;const row={weigh_date:date,kg};let query=wasEditing?sb.from("weights").update(row).eq("id",wEd):sb.from("weights").insert(row);const {data,error}=await query.select("id").single();if(error)throw error;if(!data?.id)throw new Error("Supabase did not confirm the saved weight row.");resetWeightEditor();await loadWeights();setConnectionMessage(wasEditing?"WEIGHT ENTRY UPDATED IN THE DATABASE.":"WEIGHT ENTRY SAVED TO THE DATABASE.");}
  catch(error){console.error("Weight save failed:",error);$("#we").textContent=error.message||"Could not save this weight entry.";}
  finally{if(button)button.disabled=false;}
 };
@@ -467,8 +488,13 @@ function cal(){const n=new Date(),y=n.getFullYear(),mo=n.getMonth(),first=new Da
 function renderArc(){const q=F.q.toLowerCase();
  const list=meals.filter(m=>(!F.c||m.c===F.c)&&(!F.k||m.k===F.k)&&(!F.s||m.s===F.s)&&(!F.d||m.d===F.d)&&(!q||(m.n+" "+m.x).toLowerCase().includes(q))).sort((a,b)=>(b.d+b.h).localeCompare(a.d+a.h));
  const g={};list.forEach(m=>(g[m.d]=g[m.d]||[]).push(m));
- $("#log").innerHTML=list.length?Object.entries(g).map(([d,a])=>`<h3 class="f lg">${new Date(d+"T00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"})}</h3>`+a.map(m=>`<div class="ent ${m.s.replace(" ","")}">${ico(foodIco(m),5)}<div><b class="f">${esc(m.n||"Skipped meal")}</b> <span class="st ${m.s.replace(" ","")}">${m.s}</span><div class="lbl">${m.c} · ${m.h} · ${esc(m.k)}</div>${m.x?`<div>${esc(m.x)}</div>`:""}${m.i?`<img class="ph" src="${m.i}" alt="Photo of ${esc(m.n||"the meal")}">`:""}</div></div>`).join("")).join(""):`<p class="ctr f" style="margin-top:20px">No incidents match. The kitchen is suspiciously innocent.</p>`;
+ $("#log").innerHTML=list.length?Object.entries(g).map(([d,a])=>`<h3 class="f lg">${new Date(d+"T00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"})}</h3>`+a.map(m=>`<div class="ent ${m.s.replace(" ","")}">${ico(foodIco(m),5)}<div style="min-width:0;flex:1"><b class="f">${esc(m.n||"Skipped meal")}</b> <span class="st ${m.s.replace(" ","")}">${esc(m.s)}</span><div class="lbl">${esc(m.c)} · ${esc(m.h)} · ${esc(m.k)}</div>${m.x?`<div>${esc(m.x)}</div>`:""}${m.i?`<img class="ph" src="${esc(m.i)}" alt="Photo of ${esc(m.n||"the meal")}">`:""}${editor.canEdit?`<div class="acts"><button class="btn s" type="button" data-archive-e="${esc(m.id)}">EDIT</button><button class="btn s" type="button" data-archive-d="${esc(m.id)}">DELETE</button></div>`:""}</div></div>`).join("")).join(""):`<p class="ctr f" style="margin-top:20px">No incidents match. The kitchen is suspiciously innocent.</p>`;
  cal()}
+$("#log").onclick=async e=>{
+ const button=e.target.closest("button[data-archive-e],button[data-archive-d]");if(!button)return;
+ if(button.dataset.archiveE){if(!requireEditor())return;const meal=meals.find(m=>String(m.id)===button.dataset.archiveE);if(meal)openM(meal);}
+ else if(button.dataset.archiveD)await deleteMealRecord(button.dataset.archiveD);
+};
 $("#fil").oninput=$("#fil").onchange=e=>{const k=e.target.dataset.f;if(k){F[k]=e.target.value;renderArc()}};
 $("#fclr").onclick=()=>{F={q:"",c:"",k:"",s:"",d:""};document.querySelectorAll("#fil [data-f]").forEach(i=>i.value="");renderArc()};
 $("#cal").onclick=e=>{const d=e.target.closest("[data-d]");if(d){F.d=F.d===d.dataset.d?"":d.dataset.d;$("#fdt").value=F.d;renderArc()}};
